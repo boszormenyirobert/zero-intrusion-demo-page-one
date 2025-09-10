@@ -80,9 +80,9 @@
     },
     "scripts": {
         "auto-scripts": {
-            "cache:clear": "symfony-cmd",
-            "assets:install %PUBLIC_DIR%": "symfony-cmd",
-            "importmap:install": "symfony-cmd"
+            "cache:clear": "php8.2-cli bin/console cache:clear",
+            "assets:install %PUBLIC_DIR%": "php8.2-cli bin/console assets:install %PUBLIC_DIR%",
+            "importmap:install": "php8.2-cli bin/console importmap:install"
         },
         "post-install-cmd": [
             "@auto-scripts"
