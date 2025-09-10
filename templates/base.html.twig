@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Coffee House</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f1ee;
+      color: #3b2f2f;
+      line-height: 1.6;
+      background-image: url(https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIzLTAzL3JtNjA0YmF0Y2gyLWJhY2tncm91bmQtYm0tMDMtMDEtYy5qcGc.jpg);
+      background-repeat: no-repeat;
+      background-size: cover;
+    }
+    header {
+      background-color: #6f4e37;
+      color: #fff;
+      padding: 40px 20px;
+      text-align: center;
+      position: relative;
+      
+      status{        
+    border:1px solid gray;width:300px;min-height:30px;padding:10px;position:fixed:top:50px;right:50px;background:#000;color:#fff;
+          }
+    }
+    header h1 {
+      margin: 0;
+      font-size: 3rem;
+    }
+    qr-code {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 150px;
+    }
+    section {
+      padding: 60px 20px;
+      max-width: 1100px;
+      margin: auto;
+    }
+    .image-text-block {
+      display: flex;
+      gap: 40px;
+      margin-bottom: 60px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .image-text-block img {
+      width: 30%;
+      border-radius: 10px;
+    }
+    .image-text-block div {
+      flex: 1 1 65%;
+    }
+    footer {
+      background-color: #6f4e37;
+      color: #fff;
+      text-align: center;
+      padding: 30px 20px;
+    }
+    button{
+      border: 2px solid #fff;
+      width: 135px;
+      line-height: 28px;
+      border-radius: 3px;
+      font-size: 14px;
+      letter-spacing: 1.1px;
+    }
+    .qr-container {
+      text-align: center;
+      margin-top: 50px;
+    }
+     .qr-container > img {
+        width:350px;
+        height:350px;
+        padding:100px 0;
+     }
+     .status{
+      margin-bottom:250px;
+     }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Welcome to Aroma Coffee House</h1>
+    <p>Your daily dose of fresh brews and cozy vibes</p>
+
+{% if user is not null %}
+      <p>Authenticated User: {{ user }}</p>      
+{% endif %}
+
+    <a href="/"><button>Home</button></a>
+
+    {% if user is null %}
+      <a href="/registration"><button>Register Here</button></a>
+      <a id="user-login" href="/login"><button>Login</button></a>
+      {% else %}
+      <a href="/logout"><button>Logout</button></a>
+    {% endif %}
+  </header>
+  <main>
+  {% block body %}{% endblock %}
+  </main>
+  <footer>
+    <p>&copy; 2025 Aroma Coffee House. All rights reserved.</p>
+  </footer>
+  
+  <script>
+      var userPublicId = localStorage.getItem("userPublicId");
+      if (userPublicId && document.getElementById("user-login")) {
+        let link = document.getElementById("user-login");
+        link.href = `/login?userPublicId=${encodeURIComponent(userPublicId)}`;
+      }
+  </script>
+
+{% if userPublicId is defined %}
+  <script>
+      var userPublicId = "{{ userPublicId|e('js') }}";
+      localStorage.setItem("userPublicId", userPublicId);
+      
+  </script>
+{% endif %}
+
+
+</body>
+</html>
+
+
+  
+      

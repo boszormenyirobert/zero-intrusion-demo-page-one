@@ -1,0 +1,13 @@
+lexik_jwt_authentication:
+    secret_key: '%env(resolve:JWT_SECRET_KEY)%'
+    public_key: '%env(resolve:JWT_PUBLIC_KEY)%'
+    pass_phrase: '%env(JWT_PASSPHRASE)%'
+    token_extractors:
+        # check token in a cookie
+        authorization_header:
+            enabled: false
+            prefix:  jwt_token
+            name:    Authorization
+        cookie:
+            enabled: true
+            name:    jwt_token

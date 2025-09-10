@@ -1,0 +1,293 @@
+<?php
+
+namespace App\Controller\User;
+
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Routing\Annotation\Route;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use App\DTO\RegistrationProcessDTO;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Doctrine\ORM\EntityManagerInterface;
+use App\Repository\UserRepository;
+use Symfony\Component\HttpFoundation\Cookie;
+use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
+use Lexik\Bundle\JWTAuthenticationBundle\Encoder\JWTEncoderInterface;
+
+
+class UserController extends AbstractController
+{
+    public function __construct(
+        private LoggerInterface $logger,
+        private EntityManagerInterface $entityManager
+    ) {}
+
+    #[Route('/', name: 'home', methods: "GET")]
+    public function index(    
+        Request $request,
+        JWTEncoderInterface $jwtEncoder,
+        UserRepository $userRepository    
+    ) {   
+        $jwtTokenEncoded = $request->cookies->get('jwt_token') ?? '';   
+        $this->logger->critical("JWT Token from cookie: " . $jwtTokenEncoded);
+
+        if($jwtTokenEncoded){
+            $jwt_token = $jwtEncoder->decode($jwtTokenEncoded);
+
+            if ($jwt_token) {           
+                $email = $jwt_token['username'] ?? 'n/a';
+                $user = $userRepository->findOneBy(['email' => $email]);
+                return $this->render('home.html.twig', [
+                    'user' => $user->getEmail() ?? null,
+                    'userPublicId' => $user->getPublicId() ?? null       
+                ]);
+            }
+        }
+
+        
+        return $this->render('home.html.twig', [
+            'user' => null           
+        ]);
+    }
+
+    #[Route('/registration', name: 'registration', methods: ['GET'])]
+    public function registration(HttpClientInterface $client)
+    {
+        $timestamp     = time();
+        $secret        = 'TEhiYzFKVDFDVEJKOEJ3ZGhSRVF2b2JGNk9XRnpMeGRWTm1ud2dWd3M4alc4ellSQnAreFd2Q0tPbEJyUFFiTXFWTUlzbGJkM3dVcHQrMVo2eFRUNDJhSjZibEZic25IcCszaTJKdm9zYUE9';
+        $corporateKey  = 'cFE4MDA0MWJSUUxXQzlCbmppTm1Ld0ZhYktHTWhDZXg3TFVSNDhhTDdnMGIvQVk5TFNzMjZKNkN0RzlrWnhMVEpPR0R1N0xlMlQ1UVBzUHMzTXlXWGMwdlRrMDZ3bzZKazUyVXVjTzJLY2s9';
+        $publicId      = 'cid_5DDVTgCxOG4EDOwUbk1YkPzrjkkqLfwFC08214CNyjo9CU7OQTarDS7bLD/F';
+        $domain        = 'http://zerodemo.local/';
+        $target        = 'http://zeroproxyapi.local:8082/api/user-registration';
+
+        $hmac = hash_hmac('sha256', "{$corporateKey}|{$timestamp}", $secret);
+
+        $headers = [
+            'Content-Type'   => 'application/json',
+            'X-Client-Auth'  => $hmac,
+        ];
+
+        $payload = [
+            'publicId' => $publicId,
+            'message'  => $corporateKey,
+            'domain'   => $domain,
+        ];
+
+        $response   = $client->request('POST', $target, [
+            'headers' => $headers,
+            'json'    => $payload,
+        ]);
+
+        $responseQR = $response->toArray();
+
+        $qr = json_decode($response->getContent(), true);
+
+        return $this->render('qr-action.html.twig', [
+            'processId' => $qr['registrationProcessId'],
+            'qrCode'     => $responseQR['qrCode'] ?? null,
+        ]);
+    }
+
+
+    #[Route('/api/registration/callback', name: 'registration_callback', methods: "POST")]
+    public function registrationCallback(
+        Request $request
+    ) {   
+        $response = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        $dto = RegistrationProcessDTO::mapFromArrayRegistration($response);
+
+        $this->createUser($dto);
+
+        return new JsonResponse(['status' => 'ok'], 200);
+    }
+
+    #[Route('/login', name: 'login', methods: "GET")]
+    public function login(
+        HttpClientInterface $client,
+        Request $request
+    ) {   
+
+        $userPublicId = null;
+        if ($request->query->has('userPublicId')) {
+            $userPublicId = $request->query->get('userPublicId');
+        }
+
+        $timestamp     = time();
+        $secret        = 'TEhiYzFKVDFDVEJKOEJ3ZGhSRVF2b2JGNk9XRnpMeGRWTm1ud2dWd3M4alc4ellSQnAreFd2Q0tPbEJyUFFiTXFWTUlzbGJkM3dVcHQrMVo2eFRUNDJhSjZibEZic25IcCszaTJKdm9zYUE9';
+        $corporateKey  = 'cFE4MDA0MWJSUUxXQzlCbmppTm1Ld0ZhYktHTWhDZXg3TFVSNDhhTDdnMGIvQVk5TFNzMjZKNkN0RzlrWnhMVEpPR0R1N0xlMlQ1UVBzUHMzTXlXWGMwdlRrMDZ3bzZKazUyVXVjTzJLY2s9';
+        $publicId      = 'cid_5DDVTgCxOG4EDOwUbk1YkPzrjkkqLfwFC08214CNyjo9CU7OQTarDS7bLD/F';
+        $domain        = 'http://zerodemo.local/';
+        $target = "http://zeroproxyapi.local:8082/api/user-login";
+
+
+        $hmac = hash_hmac('sha256', $corporateKey . '|' . $timestamp, $secret);
+        
+        $header = [
+            'Content-Type' => 'application/json',
+            'X-Client-Auth' => $hmac
+        ];       
+
+        $response = $client->request('POST', $target, [
+            'headers' => $header,
+            'body' => json_encode([
+                "publicId" => $publicId,
+                "message" => $corporateKey,
+                "domain" => $domain,
+                "userPublicId" => $userPublicId
+            ], \JSON_THROW_ON_ERROR)
+        ]);
+    
+        $responseQR = json_decode($response->getContent(),true);
+
+        return $this->render('qr-action.html.twig', [
+                'processId' => $responseQR['domainProcessId'],
+                'qrCodeData' => $responseQR,
+                'qrCode' => $responseQR['qrCode'],
+                'user' => null     
+        ]);
+    }    
+
+    #[Route('/api/user-login/callback', name: 'user_login_callback', methods: ["POST"])]
+    public function systemHubLoginCallback(
+        Request $request,
+        UserRepository $userRepository
+        )
+    {
+        $response = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        $dto = RegistrationProcessDTO::mapFromArrayLogin($response);
+        $user = $userRepository->findOneBy([
+            'publicId' => $dto->getPublicId(),
+            'email' => $dto->getEmail()
+        ]);
+
+        $user->setAllowed(true);
+        $user->setProcess($dto->getProcessId());
+        $this->entityManager->persist($user);
+        $this->entityManager->flush();
+
+        $this->logger->critical("Login callback received: " . json_encode((array)$user));
+
+        return new JsonResponse(['status' => 'ok'], 200);
+    }    
+
+    #[Route('/user-login/check', name: 'user_login_check', methods: "GET")]
+    public function userLoginCheck(
+        Request $request,
+        UserRepository $userRepository,
+        JWTTokenManagerInterface $jwtManager
+    )
+    {
+        $processId = $request->query->get('processId');
+        $user = $userRepository->findOneBy([
+            'process' => $processId
+        ]);
+       
+        if($user && $user->isAllowed()){            
+            $token = $jwtManager->create($user);
+            $response = new JsonResponse([
+                'message' => 'Authentication is success',
+                'jwt_token' => $token
+            ]);
+
+            //$response = $this->redirectToRoute('home');
+
+            $cookie = new Cookie(
+                'jwt_token',
+                $token,
+                time() + 3600, // expire in 1h
+                '/',
+                null,
+                false,  // secure (set to true on HTTPS)
+                true,   // httpOnly
+                false,
+                'Strict'
+            );
+
+            $response = $this->json([
+                'message' => 'Authentication success.'
+            ]);
+
+            $response->headers->setCookie($cookie);
+
+            return $response;
+        }
+
+        return $this->json(['message' => 'Unsuccess authentication.']);
+    }     
+
+    #[Route('/logout', name: 'logout', methods: "GET")]
+    public function logout(    
+        Request $request,
+        JWTEncoderInterface $jwtEncoder,
+        UserRepository $userRepository    
+    ) {   
+        $response = $this->redirectToRoute('home');
+
+        $response->headers->clearCookie('jwt_token', '/', null, false, true, 'Strict');
+
+        return $response;
+    }
+
+    private function createUser(RegistrationProcessDTO $process): void
+    {
+        $ok = $this->sslValidation($process);
+
+        if ($ok === 1) {
+            $this->logger->critical("Signature is valid.");
+
+            $user = new \App\Entity\User();
+            $user->setPublicId($process->getPublicId());
+            $user->setEmail($process->getEmail());
+            $user->setProcess($process->getProcessId());
+
+            $this->entityManager->persist($user);
+            $this->entityManager->flush();
+
+        } elseif ($ok === 0) {
+            $this->logger->critical("Signature is invalid.");
+        } else {
+            $this->logger->critical("Error during signature verification: " . openssl_error_string());
+        }
+    }
+
+    private function sslValidation(RegistrationProcessDTO $process): int|false
+    {
+        $receivedSignature = base64_decode($process->getSignature(), true);
+        if ($receivedSignature === false) {
+            $this->logger->critical('Failed to base64 decode signature.');
+            return false;
+        }
+
+        $userIdentity = json_encode(
+            [
+                'publicId' => $process->getPublicId(),
+                'email'    => $process->getEmail(),
+            ],
+            JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+        );
+
+        $publicKeyPem = <<<PEM
+    -----BEGIN PUBLIC KEY-----
+    MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqeFCCuE39ZdoF4EhCWXw
+    iHDOCvjbA7eHbvXkAG3QD4sTUZS68KIOiTvQcRqCUUgsgCYhkqcxx5B6zE2p4zzz
+    u2t5SV/av2b6p9UXGHHpANLKDwcJu0pY6Y9KfKwhY7RETvrihmCc3VvyRpvbNbp9
+    BT9W0XOX8pY9tmlDESQoWzuysTP5jH4vXu23x484YUuOdANMXMKNWCNCE9b6Q5Ax
+    cmVedGJX9ztH0vdYZJJ8F7aFs6dB0sjRtjSNJEOSIsS4WgpSIRYNbJLiFTixRZtq
+    Lk9M4FO3YumR6Cm+i2xMRgKNKTDanOTGwO4IqRQMOm+pLctFETKMPOuoGWUgc/7B
+    EQIDAQAB
+    -----END PUBLIC KEY-----
+    PEM;
+
+        $publicKey = openssl_pkey_get_public($publicKeyPem);
+        if (!$publicKey) {
+            $this->logger->critical('Failed to load public key: ' . openssl_error_string());
+            return false;
+        }
+
+        $result = openssl_verify($userIdentity, $receivedSignature, $publicKey, OPENSSL_ALGO_SHA256);
+        unset($publicKey);
+
+        return $result;
+    }
+}

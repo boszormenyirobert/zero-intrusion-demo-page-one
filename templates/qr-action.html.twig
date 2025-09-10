@@ -1,0 +1,28 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+
+    <div class="qr-container">
+        <h2 id="response"></h2>
+        <img src="data:image/png;base64,{{ qrCode }}" alt="QR Registration Code">
+    </div>
+
+<script>
+    setInterval(function() {
+        fetch("/user-login/check?processId={{processId}}")
+            .then(response => {
+                if (!response.ok) throw new Error("Network error: " + response.status);
+                return response.json();
+            })
+            .then(data => {                
+                if (data.message === "Authentication success.") {
+                    window.location.href = "/";
+                }                
+            })
+            .catch(error => {
+                console.error("Fetch failed:", error);
+            });
+    }, 2000);
+</script>
+
+{% endblock %}
