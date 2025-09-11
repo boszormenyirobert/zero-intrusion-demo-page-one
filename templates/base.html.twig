@@ -88,13 +88,13 @@
     <h1>Welcome to Aroma Coffee House</h1>
     <p>Your daily dose of fresh brews and cozy vibes</p>
 
-{% if user is not null %}
+{% if user is defined and user is not null %}
       <p>Authenticated User: {{ user }}</p>      
 {% endif %}
 
     <a href="/"><button>Home</button></a>
 
-    {% if user is null %}
+    {% if user is defined and user is null %}
       <a href="/registration"><button>Register Here</button></a>
       <a id="user-login" href="/login"><button>Login</button></a>
       {% else %}
