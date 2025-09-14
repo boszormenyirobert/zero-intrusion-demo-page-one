@@ -14,11 +14,12 @@ use App\Repository\UserRepository;
 use Symfony\Component\HttpFoundation\Cookie;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Encoder\JWTEncoderInterface;
-
+use Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface;
 
 class UserController extends AbstractController
 {
     public function __construct(
+         private ContainerBagInterface $params,
         private LoggerInterface $logger,
         private EntityManagerInterface $entityManager
     ) {}
@@ -55,9 +56,9 @@ class UserController extends AbstractController
     public function registration(HttpClientInterface $client)
     {
         $timestamp     = time();
-        $secret        = 'TEhiYzFKVDFDVEJKOEJ3ZGhSRVF2b2JGNk9XRnpMeGRWTm1ud2dWd3M4alc4ellSQnAreFd2Q0tPbEJyUFFiTXFWTUlzbGJkM3dVcHQrMVo2eFRUNDJhSjZibEZic25IcCszaTJKdm9zYUE9';
-        $corporateKey  = 'cFE4MDA0MWJSUUxXQzlCbmppTm1Ld0ZhYktHTWhDZXg3TFVSNDhhTDdnMGIvQVk5TFNzMjZKNkN0RzlrWnhMVEpPR0R1N0xlMlQ1UVBzUHMzTXlXWGMwdlRrMDZ3bzZKazUyVXVjTzJLY2s9';
-        $publicId      = 'cid_5DDVTgCxOG4EDOwUbk1YkPzrjkkqLfwFC08214CNyjo9CU7OQTarDS7bLD/F';
+        $secret        = 'bjVlSG1UU0EwallUc3FpbXFqRms5WTZuVTl0V0VtdEUxeTYrYlVqZUZ6YXRhT3I2YnZLZlVzaEVRUFFpNXhZOXRUaGpzWm9yVDJZdFVmNEE3dG40SHNNbk5VVGxlY1JsdWNnbTlUZ0IwSk09';
+        $corporateKey  = 'UEZFMk9iMkFUOUhGcHZRUHF0NFE4aGoyZ040dU4wWkpiN2c2ZkxWTUU1aHJUeXhVck1EN01ibmtDaFM2dlhIMC9kcG9NUkJHQ0NqUFBnVjZ6SHFyZ2xETUR6TjA2Y3RvOG1pYXcvNlZ5MDA9';
+        $publicId      = 'cid_Fmw17GHpSU4A8Bk04Lxl9mUF2n2csryk145Mrkk6xotTEjWsBwkpaXKEWwzl';
         $domain        = 'http://zerodemo.local/';
         $target        = 'http://zeroproxyapi.local:8082/api/user-registration';
 
@@ -114,9 +115,9 @@ class UserController extends AbstractController
         }
 
         $timestamp     = time();
-        $secret        = 'TEhiYzFKVDFDVEJKOEJ3ZGhSRVF2b2JGNk9XRnpMeGRWTm1ud2dWd3M4alc4ellSQnAreFd2Q0tPbEJyUFFiTXFWTUlzbGJkM3dVcHQrMVo2eFRUNDJhSjZibEZic25IcCszaTJKdm9zYUE9';
-        $corporateKey  = 'cFE4MDA0MWJSUUxXQzlCbmppTm1Ld0ZhYktHTWhDZXg3TFVSNDhhTDdnMGIvQVk5TFNzMjZKNkN0RzlrWnhMVEpPR0R1N0xlMlQ1UVBzUHMzTXlXWGMwdlRrMDZ3bzZKazUyVXVjTzJLY2s9';
-        $publicId      = 'cid_5DDVTgCxOG4EDOwUbk1YkPzrjkkqLfwFC08214CNyjo9CU7OQTarDS7bLD/F';
+        $secret        = 'bjVlSG1UU0EwallUc3FpbXFqRms5WTZuVTl0V0VtdEUxeTYrYlVqZUZ6YXRhT3I2YnZLZlVzaEVRUFFpNXhZOXRUaGpzWm9yVDJZdFVmNEE3dG40SHNNbk5VVGxlY1JsdWNnbTlUZ0IwSk09';
+        $corporateKey  = 'UEZFMk9iMkFUOUhGcHZRUHF0NFE4aGoyZ040dU4wWkpiN2c2ZkxWTUU1aHJUeXhVck1EN01ibmtDaFM2dlhIMC9kcG9NUkJHQ0NqUFBnVjZ6SHFyZ2xETUR6TjA2Y3RvOG1pYXcvNlZ5MDA9';
+        $publicId      = 'cid_Fmw17GHpSU4A8Bk04Lxl9mUF2n2csryk145Mrkk6xotTEjWsBwkpaXKEWwzl';
         $domain        = 'http://zerodemo.local/';
         $target = "http://zeroproxyapi.local:8082/api/user-login";
 
@@ -263,30 +264,19 @@ class UserController extends AbstractController
             [
                 'publicId' => $process->getPublicId(),
                 'email'    => $process->getEmail(),
-            ],
-            JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+            ]
         );
 
-        $publicKeyPem = <<<PEM
-    -----BEGIN PUBLIC KEY-----
-    MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqeFCCuE39ZdoF4EhCWXw
-    iHDOCvjbA7eHbvXkAG3QD4sTUZS68KIOiTvQcRqCUUgsgCYhkqcxx5B6zE2p4zzz
-    u2t5SV/av2b6p9UXGHHpANLKDwcJu0pY6Y9KfKwhY7RETvrihmCc3VvyRpvbNbp9
-    BT9W0XOX8pY9tmlDESQoWzuysTP5jH4vXu23x484YUuOdANMXMKNWCNCE9b6Q5Ax
-    cmVedGJX9ztH0vdYZJJ8F7aFs6dB0sjRtjSNJEOSIsS4WgpSIRYNbJLiFTixRZtq
-    Lk9M4FO3YumR6Cm+i2xMRgKNKTDanOTGwO4IqRQMOm+pLctFETKMPOuoGWUgc/7B
-    EQIDAQAB
-    -----END PUBLIC KEY-----
-    PEM;
+        $publicKeyPem = $this->params->get('PUBLIC_KEY');
 
         $publicKey = openssl_pkey_get_public($publicKeyPem);
-        if (!$publicKey) {
-            $this->logger->critical('Failed to load public key: ' . openssl_error_string());
-            return false;
-        }
 
+        $keyDetails = openssl_pkey_get_details(openssl_pkey_get_public($publicKeyPem));
+        $this->logger->critical('Length: ' . $keyDetails['bits']);
+        $this->logger->critical('UserIdentity : ' . $userIdentity);
         $result = openssl_verify($userIdentity, $receivedSignature, $publicKey, OPENSSL_ALGO_SHA256);
         unset($publicKey);
+        $this->logger->critical('SSL openssl_verify is valid : ' . $result);
 
         return $result;
     }
