@@ -39,10 +39,12 @@ class UserController extends AbstractController
             if ($jwt_token) {           
                 $email = $jwt_token['username'] ?? 'n/a';
                 $user = $userRepository->findOneBy(['email' => $email]);
-                return $this->render('home.html.twig', [
-                    'user' => $user->getEmail() ?? null,
-                    'userPublicId' => $user->getPublicId() ?? null       
-                ]);
+                if($user){
+                    return $this->render('home.html.twig', [
+                        'user' => $user->getEmail() ?? null,
+                        'userPublicId' => $user->getPublicId() ?? null       
+                    ]);
+                }
             }
         }
 
@@ -56,9 +58,9 @@ class UserController extends AbstractController
     public function registration(HttpClientInterface $client)
     {
         $timestamp     = time();
-        $secret        = 'bjVlSG1UU0EwallUc3FpbXFqRms5WTZuVTl0V0VtdEUxeTYrYlVqZUZ6YXRhT3I2YnZLZlVzaEVRUFFpNXhZOXRUaGpzWm9yVDJZdFVmNEE3dG40SHNNbk5VVGxlY1JsdWNnbTlUZ0IwSk09';
-        $corporateKey  = 'UEZFMk9iMkFUOUhGcHZRUHF0NFE4aGoyZ040dU4wWkpiN2c2ZkxWTUU1aHJUeXhVck1EN01ibmtDaFM2dlhIMC9kcG9NUkJHQ0NqUFBnVjZ6SHFyZ2xETUR6TjA2Y3RvOG1pYXcvNlZ5MDA9';
-        $publicId      = 'cid_Fmw17GHpSU4A8Bk04Lxl9mUF2n2csryk145Mrkk6xotTEjWsBwkpaXKEWwzl';
+        $secret        = $this->params->get('CORPORATE_ID_SECRET');
+        $corporateKey  = $this->params->get('CORPORATE_ID_KEY');
+        $publicId      = $this->params->get('CORPORATE_ID');
         $domain        = 'http://zerodemo.local/';
         $target        = 'http://zeroproxyapi.local:8082/api/user-registration';
 
@@ -115,9 +117,9 @@ class UserController extends AbstractController
         }
 
         $timestamp     = time();
-        $secret        = 'bjVlSG1UU0EwallUc3FpbXFqRms5WTZuVTl0V0VtdEUxeTYrYlVqZUZ6YXRhT3I2YnZLZlVzaEVRUFFpNXhZOXRUaGpzWm9yVDJZdFVmNEE3dG40SHNNbk5VVGxlY1JsdWNnbTlUZ0IwSk09';
-        $corporateKey  = 'UEZFMk9iMkFUOUhGcHZRUHF0NFE4aGoyZ040dU4wWkpiN2c2ZkxWTUU1aHJUeXhVck1EN01ibmtDaFM2dlhIMC9kcG9NUkJHQ0NqUFBnVjZ6SHFyZ2xETUR6TjA2Y3RvOG1pYXcvNlZ5MDA9';
-        $publicId      = 'cid_Fmw17GHpSU4A8Bk04Lxl9mUF2n2csryk145Mrkk6xotTEjWsBwkpaXKEWwzl';
+        $secret        = $this->params->get('CORPORATE_ID_SECRET');
+        $corporateKey  = $this->params->get('CORPORATE_ID_KEY');
+        $publicId      = $this->params->get('CORPORATE_ID');
         $domain        = 'http://zerodemo.local/';
         $target = "http://zeroproxyapi.local:8082/api/user-login";
 
