@@ -61,8 +61,8 @@ class UserController extends AbstractController
         $secret        = $this->params->get('CORPORATE_ID_SECRET');
         $corporateKey  = $this->params->get('CORPORATE_ID_KEY');
         $publicId      = $this->params->get('CORPORATE_ID');
-        $domain        = 'http://zerodemo.local/';
-        $target        = 'http://zeroproxyapi.local:8082/api/user-registration';
+        $domain        = 'http://82.165.219.9/';
+        $target        = 'http://82.165.219.9:8082/api/user-registration';
 
         $hmac = hash_hmac('sha256', "{$corporateKey}|{$timestamp}", $secret);
 
@@ -120,8 +120,8 @@ class UserController extends AbstractController
         $secret        = $this->params->get('CORPORATE_ID_SECRET');
         $corporateKey  = $this->params->get('CORPORATE_ID_KEY');
         $publicId      = $this->params->get('CORPORATE_ID');
-        $domain        = 'http://zerodemo.local/';
-        $target = "http://zeroproxyapi.local:8082/api/user-login";
+        $domain        = 'http://82.165.219.9/';
+        $target = "http://82.165.219.9:8082/api/user-login";
 
 
         $hmac = hash_hmac('sha256', $corporateKey . '|' . $timestamp, $secret);
