@@ -7,7 +7,7 @@
         <img src="data:image/png;base64,{{ qrCode }}" alt="QR Registration Code">
     </div>
 
-<script>
+<!--script>
     setInterval(function() {
         fetch("/user-login/check?processId={{processId}}")
             .then(response => {
@@ -23,6 +23,6 @@
                 console.error("Fetch failed:", error);
             });
     }, 2000);
-</script>
+</script-->
 
 {% endblock %}

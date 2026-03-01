@@ -82,51 +82,228 @@
       margin-bottom:250px;
      }
   </style>
-</head>
-<body>
-  <header>
-    <h1>Welcome to Aroma Coffee House</h1>
-    <p>Your daily dose of fresh brews and cozy vibes</p>
-
-{% if user is defined and user is not null %}
-      <p>Authenticated User: {{ user }}</p>      
-{% endif %}
-
-    <a href="/"><button>Home</button></a>
-
-    {% if user is defined and user is null %}
-      <a href="/registration"><button>Register Here</button></a>
-      <a id="user-login" href="/login"><button>Login</button></a>
-      {% else %}
-      <a href="/logout"><button>Logout</button></a>
-    {% endif %}
-  </header>
-  <main>
-  {% block body %}{% endblock %}
-  </main>
-  <footer>
-    <p>&copy; 2025 Aroma Coffee House. All rights reserved.</p>
-  </footer>
-  
-  <script>
-      var userPublicId = localStorage.getItem("userPublicId");
-      if (userPublicId && document.getElementById("user-login")) {
-        let link = document.getElementById("user-login");
-        link.href = `/login?userPublicId=${encodeURIComponent(userPublicId)}`;
+    <style>
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255,255,255,0.08);
       }
-  </script>
 
-{% if userPublicId is defined %}
-  <script>
-      var userPublicId = "{{ userPublicId|e('js') }}";
-      localStorage.setItem("userPublicId", userPublicId);
-      
-  </script>
-{% endif %}
+      .modal-content {
+        background: #fff;
+        color: #000;
+        border: 1px solid #000;
+        width: 300px;
+        padding: 20px;
+        margin: 15% auto;
+        border-radius: 8px;
+        position: relative;
+      }
 
+      .close {
+        position: absolute;
+        right: 10px;
+        top: 5px;
+        cursor: pointer;
+        font-size: 20px;
+      }
+      .login-btn{
+        display:block;
+      text-align:right;
+      }
+      .login-btn > button{
+      border: 1px solid #000;
+          margin-right: 4px;
+          margin-top: 15px;
+      }
+  </style>
+</head>
+ <body>
+    <header>
+      <h1>Super Fast Coffee House</h1>
+      <p>Feel the Rush. Own the Road.</p>
 
-</body>
+      {% if user is defined and user is not null %}
+            <p>Authenticated User: {{ user }}</p>      
+      {% endif %}
+
+      <a href="/"><button>Home</button></a>
+
+      {% if user is defined and user is null %}
+        <a href="/registration"><button>Register Here</button></a>
+
+        <!-- Dropdown és link -->	
+        <button id="open-modal">Login</button>
+        <span id="timeout" style="display:none;color: red;border: 1px solid red;width: 350px;margin: 15px auto 0;"></span>
+        <span id="repeat-login" style="display:none;">Repeat</span>
+
+        <!-- Popup -->
+        <div id="modal" class="modal">
+          <div class="modal-content">
+            <span id="close-modal" class="close">&times;</span>
+            <h2>Login</h2>
+            <select id="user-select"></select>
+                  <a id="user-login" class="login-btn" href="/login"><button>Login</button></a>
+          </div>
+        </div>
+        {% else %}
+        <a href="/logout"><button>Logout</button></a>
+        <button id="one-touch-login">One Touch Login <span id="tick" style="display:none;color: green; font-size: 14px;">✔</span></button>
+      {% endif %}
+    </header>
+    <main>
+    {% block body %}{% endblock %}
+    </main>
+    <footer style="background-color:#030733">
+      <p>&copy; 2025 Aroma Coffee House. All rights reserved.</p>
+    </footer>
+    
+    {% if userPublicId is defined and user is defined %}
+      <script>
+          var storedUsers = JSON.parse(localStorage.getItem("users") || "[]");
+          var newUser = {
+              userPublicId: "{{ userPublicId|e('js') }}",
+              email: "{{ user|e('js') }}"
+          };
+          var oneTouchBtn = document.getElementById("one-touch-login");
+
+          // Hide one touch btn, if user already "one-touch-activated"
+          var exists = storedUsers.some(u => u.userPublicId === newUser.userPublicId);
+          if (exists){
+            oneTouchBtn.style.display = "none";
+          }
+
+          // Click and activate the one-touch-login
+          oneTouchBtn.onclick = ()=>{	        
+            var exists = storedUsers.some(u => u.userPublicId === newUser.userPublicId);
+            if (!exists) {
+              storedUsers.push(newUser);
+              localStorage.setItem("users", JSON.stringify(storedUsers));
+              var tick = document.getElementById("tick");
+              tick.style.display = "inline-block";
+              setTimeout( ()=> {
+                oneTouchBtn.style.display = "none";
+              }, 33350);   
+            }
+          }
+      </script>
+    {% endif %}
+
+    <script>
+    // Uploaded users from localStorage to dropdown and set login link
+      function initLoginDropdown() {
+        var currentUrl = window.location.href;
+
+        var storedUsers = JSON.parse(localStorage.getItem("users") || "[]");
+        var select = document.getElementById("user-select");
+        var link = document.getElementById("user-login");
+
+        if (!select || !link) return;
+
+        select.innerHTML = "";
+        
+        var option = document.createElement("option");
+        // Default option, if no user is selected
+        option.value = "";
+        option.text = "Select user";
+        select.appendChild(option);
+
+        // Populate dropdown with stored users
+        storedUsers.forEach(user => {
+            var option = document.createElement("option");
+            option.value = user.userPublicId;
+            option.text = user.email;
+            select.appendChild(option);
+        });
+
+        select.addEventListener("change", function() {
+            link.href = `/login?userPublicId=${encodeURIComponent(this.value)}`;
+        });
+      }
+      document.addEventListener("DOMContentLoaded", initLoginDropdown);      
+    </script>
+
+    <script>
+    // Modal functionality
+      const modal = document.getElementById("modal");
+      const closeBtn = document.getElementById("close-modal");
+      const openBtn = document.getElementById("open-modal");
+
+      openBtn.onclick = () => {
+        var storedUsers = JSON.parse(localStorage.getItem("users") || "[]");
+
+        // allow to open modal if "one touch user" already exist
+        if(storedUsers.length > 0){
+          modal.style.display = "block";
+        } else { 
+        window.location.href = "/login";
+        }
+      }
+
+      closeBtn.onclick = () => modal.style.display = "none";
+
+      // Close modal when clicking outside of it
+      window.onclick = (e) => {
+        if (e.target === modal) {
+          modal.style.display = "none";
+        }
+      };
+    </script>
+
+    {% if processId is defined and processId %}
+    <script>
+    // Polling for authentication status every 2 seconds
+        let attemptCount = 0;
+        const maxAttempts = 5; // Stop after 5 attempts (10 seconds)
+
+        const intervalId = setInterval(function() {
+            attemptCount++;
+
+            fetch("/user-login/check?processId={{processId}}")
+                .then(response => {
+                    if (!response.ok) throw new Error("Network error: " + response.status);
+                    return response.json();
+                })
+                .then(data => {                
+                    if (data.message === "Authentication success.") {
+                        clearInterval(intervalId); // stop polling
+                        window.location.href = "/";
+                    }
+                })
+                .catch(error => {
+                    console.error("Fetch failed:", error);
+                });
+
+            // Stop after 5 attempts              
+            if (attemptCount >= maxAttempts) {
+                clearInterval(intervalId);
+                console.log("Max polling attempts reached.");
+                  var timeoutSpan = document.getElementById("timeout");
+                  timeoutSpan.textContent = "Authentication timed out. Please try again.";
+                  timeoutSpan.style.display = "block";                    
+                  var repeatLogin = document.getElementById("repeat-login");
+                  repeatLogin.style.display = "inline-block";
+            }
+
+        }, 2000);
+
+        var repeatLogin = document.getElementById("repeat-login");
+        repeatLogin.onclick = function() {
+            window.location.href  = "/login";
+        }
+    </script> 
+    {% endif %}   
+  </body>
 </html>
+
+
+  
+      
 
 
   
