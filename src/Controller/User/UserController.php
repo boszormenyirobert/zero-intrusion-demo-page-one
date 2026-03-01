@@ -18,11 +18,23 @@ use Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface;
 
 class UserController extends AbstractController
 {
+    private string $secret;
+    private string $corporateKey;
+    private string $publicId;
+    private string $hub = 'https://hub.zero-intrusion.com';
+    private string $userRegistration = '/api/user-registration';
+    private string $userLogin = '/api/user-login';
+
+
     public function __construct(
-         private ContainerBagInterface $params,
+        private ContainerBagInterface $params,
         private LoggerInterface $logger,
         private EntityManagerInterface $entityManager
-    ) {}
+    ) {        
+        $this->secret = $this->params->get('CORPORATE_ID_SECRET');
+        $this->corporateKey = $this->params->get('CORPORATE_ID_KEY');
+        $this->publicId = $this->params->get('CORPORATE_ID');
+    }
 
     #[Route('/', name: 'home', methods: "GET")]
     public function index(    
@@ -58,13 +70,7 @@ class UserController extends AbstractController
     public function registration(HttpClientInterface $client)
     {
         $timestamp     = time();
-        $secret        = $this->params->get('CORPORATE_ID_SECRET');
-        $corporateKey  = $this->params->get('CORPORATE_ID_KEY');
-        $publicId      = $this->params->get('CORPORATE_ID');
-        $domain        = 'http://82.165.219.9/';
-        $target        = 'http://82.165.219.9:8082/api/user-registration';
-
-        $hmac = hash_hmac('sha256', "{$corporateKey}|{$timestamp}", $secret);
+        $hmac = hash_hmac('sha256', "{$this->corporateKey}|{$timestamp}", $this->secret);
 
         $headers = [
             'Content-Type'   => 'application/json',
@@ -72,12 +78,12 @@ class UserController extends AbstractController
         ];
 
         $payload = [
-            'publicId' => $publicId,
-            'message'  => $corporateKey,
-            'domain'   => $domain,
+            'publicId' => $this->publicId,
+            'message'  => $this->corporateKey,
+            'domain'   => $this->hub,
         ];
 
-        $response   = $client->request('POST', $target, [
+        $response   = $client->request('POST', $this->hub . $this->userRegistration, [
             'headers' => $headers,
             'json'    => $payload,
         ]);
@@ -112,31 +118,46 @@ class UserController extends AbstractController
     ) {   
 
         $userPublicId = null;
+
         if ($request->query->has('userPublicId')) {
             $userPublicId = $request->query->get('userPublicId');
+
+            if ($userPublicId === null) {
+                return;
+            }
+
+            // Length check
+            if (strlen($userPublicId) !== 48) {
+                throw new \InvalidArgumentException('Invalid length.');
+            }
+
+            // Base64 karakter whitelist
+            if (!preg_match('/^[A-Za-z0-9+\/]+={0,2}$/', $userPublicId)) {
+                throw new \InvalidArgumentException('Invalid characters.');
+            }
+
+            // Strict decode
+            $decoded = base64_decode($userPublicId, true);
+
+            if ($decoded === false || strlen($decoded) !== 35) {
+                throw new \InvalidArgumentException('Invalid token.');
+            }
         }
 
-        $timestamp     = time();
-        $secret        = $this->params->get('CORPORATE_ID_SECRET');
-        $corporateKey  = $this->params->get('CORPORATE_ID_KEY');
-        $publicId      = $this->params->get('CORPORATE_ID');
-        $domain        = 'http://82.165.219.9/';
-        $target = "http://82.165.219.9:8082/api/user-login";
-
-
-        $hmac = hash_hmac('sha256', $corporateKey . '|' . $timestamp, $secret);
+        $timestamp = time();
+        $hmac = hash_hmac('sha256', $this->corporateKey . '|' . $timestamp, $this->secret);
         
         $header = [
             'Content-Type' => 'application/json',
             'X-Client-Auth' => $hmac
         ];       
 
-        $response = $client->request('POST', $target, [
+        $response = $client->request('POST', $this->hub . $this->userLogin, [
             'headers' => $header,
             'body' => json_encode([
-                "publicId" => $publicId,
-                "message" => $corporateKey,
-                "domain" => $domain,
+                "publicId" => $this->publicId,
+                "message" => $this->corporateKey,
+                "domain" => $this->hub,
                 "userPublicId" => $userPublicId
             ], \JSON_THROW_ON_ERROR)
         ]);
@@ -149,7 +170,7 @@ class UserController extends AbstractController
                 'qrCode' => $responseQR['qrCode'],
                 'user' => null     
         ]);
-    }    
+    } 
 
     #[Route('/api/user-login/callback', name: 'user_login_callback', methods: ["POST"])]
     public function systemHubLoginCallback(
@@ -192,8 +213,6 @@ class UserController extends AbstractController
                 'message' => 'Authentication is success',
                 'jwt_token' => $token
             ]);
-
-            //$response = $this->redirectToRoute('home');
 
             $cookie = new Cookie(
                 'jwt_token',
