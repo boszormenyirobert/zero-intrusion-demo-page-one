@@ -36,7 +36,10 @@ class UserController extends AbstractController
         $this->publicId = $this->params->get('CORPORATE_ID');
     }
 
-    #[Route('/', name: 'home', methods: "GET")]
+    /**
+     * Home page endpoint
+     */
+    #[Route('/', name: 'home', methods: ['GET'])]
     public function index(    
         Request $request,
         JWTEncoderInterface $jwtEncoder,
@@ -66,6 +69,10 @@ class UserController extends AbstractController
         ]);
     }
 
+    /**
+     * This endpoint initiates the registration process by generating a QR code and sending it to the frontend.
+     * Sends in the header the corporate key and a timestamp, signed with the secret, to authenticate the request to the system hub (API).
+     */
     #[Route('/registration', name: 'registration', methods: ['GET'])]
     public function registration(HttpClientInterface $client)
     {
@@ -99,19 +106,35 @@ class UserController extends AbstractController
     }
 
 
-    #[Route('/api/registration/callback', name: 'registration_callback', methods: "POST")]
+    /**
+     * Called by the system hub when the user completes the registration process on their mobile device.
+     * It verifies the SSL signature and creates the user record if valid.
+     */
+    #[Route('/api/registration/callback', name: 'registration_callback', methods: ['POST'])]
     public function registrationCallback(
         Request $request
     ) {   
         $response = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
         $dto = RegistrationProcessDTO::mapFromArrayRegistration($response);
 
-        $this->createUser($dto);
+        $ok = $this->sslValidation($dto);       
+        if ($ok === 1) {
+            $this->logger->critical("Signature is valid.");
+            $this->createUser($dto);
+        } elseif ($ok === 0) {
+            $this->logger->critical("Signature is invalid.");
+        } else {
+            $this->logger->critical("Error during signature verification: " . openssl_error_string());
+        }        
 
-        return new JsonResponse(['status' => 'ok'], 200);
+        return new JsonResponse(['status' => 'ok','error' => 'Invalid signature'], 200);
     }
 
-    #[Route('/login', name: 'login', methods: "GET")]
+    /**
+     * This endpoint initiates the login process by generating a QR code and sending it to the frontend.
+     * Sends in the header the corporate key and a timestamp, signed with the secret, to authenticate the request to the system hub (API).
+     */
+    #[Route('/login', name: 'login', methods: ['GET'])]
     public function login(
         HttpClientInterface $client,
         Request $request
@@ -172,7 +195,11 @@ class UserController extends AbstractController
         ]);
     } 
 
-    #[Route('/api/user-login/callback', name: 'user_login_callback', methods: ["POST"])]
+    /**
+     * Called by the system hub when the user completes the login process on their mobile device.
+     * It verifies the SSL signature and updates the user record to allow access.
+     */
+    #[Route('/api/user-login/callback', name: 'user_login_callback', methods: ['POST'])]
     public function systemHubLoginCallback(
         Request $request,
         UserRepository $userRepository
@@ -180,22 +207,38 @@ class UserController extends AbstractController
     {
         $response = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
         $dto = RegistrationProcessDTO::mapFromArrayLogin($response);
-        $user = $userRepository->findOneBy([
-            'publicId' => $dto->getPublicId(),
-            'email' => $dto->getEmail()
-        ]);
+        $ok = $this->sslValidation($dto);       
+        if ($ok === 1) {
+            $this->logger->critical("Signature is valid.");
 
-        $user->setAllowed(true);
-        $user->setProcess($dto->getProcessId());
-        $this->entityManager->persist($user);
-        $this->entityManager->flush();
+            $user = $userRepository->findOneBy([
+                'publicId' => $dto->getPublicId(),
+                'email' => $dto->getEmail()
+            ]);
 
-        $this->logger->critical("Login callback received: " . json_encode((array)$user));
+            $user->setAllowed(true);
+            $user->setProcess($dto->getProcessId());
+            $this->entityManager->persist($user);
+            $this->entityManager->flush();
 
-        return new JsonResponse(['status' => 'ok'], 200);
+            $this->logger->critical("Login callback received: " . json_encode((array)$user));
+
+            return new JsonResponse(['status' => 'ok'], 200);
+
+        } elseif ($ok === 0) {
+            $this->logger->critical("Signature is invalid.");
+            return new JsonResponse(['status' => 'ok','error' => 'Invalid signature'], 200);
+        } else {
+            $this->logger->critical("Error during signature verification: " . openssl_error_string());
+            return new JsonResponse(['status' => 'ok','error' => 'Invalid signature'], 200);
+        }
     }    
 
-    #[Route('/user-login/check', name: 'user_login_check', methods: "GET")]
+    /**
+     * Polled by the frontend to check if the user has completed the login process.
+     * If successful, returns a JWT token and sets it as a cookie.
+     */
+    #[Route('/user-login/check', name: 'user_login_check', methods: ['GET'])]
     public function userLoginCheck(
         Request $request,
         UserRepository $userRepository,
@@ -238,7 +281,10 @@ class UserController extends AbstractController
         return $this->json(['message' => 'Unsuccess authentication.']);
     }     
 
-    #[Route('/logout', name: 'logout', methods: "GET")]
+    /**
+     * This endpoint logs out the user by clearing the JWT token cookie and redirecting to the home page.
+     */
+    #[Route('/logout', name: 'logout', methods: ['GET'])]
     public function logout(    
         Request $request,
         JWTEncoderInterface $jwtEncoder,
