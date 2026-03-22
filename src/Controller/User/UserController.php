@@ -21,7 +21,7 @@ class UserController extends AbstractController
     private string $secret;
     private string $corporateKey;
     private string $publicId;
-    private string $hub = 'https://hub.zero-intrusion.com';
+    private string $hub = 'http://hub.local:8082';
     private string $userRegistration = '/api/user-registration';
     private string $userLogin = '/api/user-login';
 
@@ -185,6 +185,17 @@ class UserController extends AbstractController
             ], \JSON_THROW_ON_ERROR)
         ]);
     
+        try{
+            $response->getContent();
+        } catch (\Exception $e) {
+            $this->logger->critical("Error fetching login QR code: " . $e->getMessage());
+            return $this->render('qr-action.html.twig', [
+                'processId' => null,
+                'qrCodeData' => null,
+                'qrCode' => null,
+                'user' => null     
+            ]);
+        }
         $responseQR = json_decode($response->getContent(),true);
 
         return $this->render('qr-action.html.twig', [
@@ -339,8 +350,6 @@ class UserController extends AbstractController
         $publicKey = openssl_pkey_get_public($publicKeyPem);
 
         $keyDetails = openssl_pkey_get_details(openssl_pkey_get_public($publicKeyPem));
-        $this->logger->critical('Length: ' . $keyDetails['bits']);
-        $this->logger->critical('UserIdentity : ' . $userIdentity);
         $result = openssl_verify($userIdentity, $receivedSignature, $publicKey, OPENSSL_ALGO_SHA256);
         unset($publicKey);
         $this->logger->critical('SSL openssl_verify is valid : ' . $result);
