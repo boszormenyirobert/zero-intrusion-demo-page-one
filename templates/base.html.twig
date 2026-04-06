@@ -1,250 +1,285 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Coffee House</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f4f1ee;
-      color: #3b2f2f;
-      line-height: 1.6;
-      background-image: url(https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIzLTAzL3JtNjA0YmF0Y2gyLWJhY2tncm91bmQtYm0tMDMtMDEtYy5qcGc.jpg);
-      background-repeat: no-repeat;
-      background-size: cover;
-    }
-    header {
-      background-color: #6f4e37;
-      color: #fff;
-      padding: 40px 20px;
-      text-align: center;
-      position: relative;
-      
-      status{        
-    border:1px solid gray;width:300px;min-height:30px;padding:10px;position:fixed:top:50px;right:50px;background:#000;color:#fff;
-          }
-    }
-    header h1 {
-      margin: 0;
-      font-size: 3rem;
-    }
-    qr-code {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      width: 150px;
-    }
-    section {
-      padding: 60px 20px;
-      max-width: 1100px;
-      margin: auto;
-    }
-    .image-text-block {
-      display: flex;
-      gap: 40px;
-      margin-bottom: 60px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-    .image-text-block img {
-      width: 30%;
-      border-radius: 10px;
-    }
-    .image-text-block div {
-      flex: 1 1 65%;
-    }
-    footer {
-      background-color: #6f4e37;
-      color: #fff;
-      text-align: center;
-      padding: 30px 20px;
-    }
-    button{
-      border: 2px solid #fff;
-      width: 135px;
-      line-height: 28px;
-      border-radius: 3px;
-      font-size: 14px;
-      letter-spacing: 1.1px;
-    }
-    .qr-container {
-      text-align: center;
-      margin-top: 50px;
-    }
-     .qr-container > img {
-        width:350px;
-        height:350px;
-        padding:100px 0;
-     }
-     .status{
-      margin-bottom:250px;
-     }
-  </style>
-    <style>
-      .modal {
-        display: none;
-        position: fixed;
-        z-index: 1000;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(255,255,255,0.08);
-      }
+	<head>
+		<meta charset="UTF-8"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+		<title>Coffee House</title>
+		<style>
+			body {
+				margin: 0;
+				font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+				background-color: #f4f1ee;
+				color: #3b2f2f;
+				line-height: 1.6;
+				background-image: url('https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIzLTAzL3JtNjA0YmF0Y2gyLWJhY2tncm91bmQtYm0tMDMtMDEtYy5qcGc.jpg');
+				background-repeat: no-repeat;
+				background-size: cover;
+			}
+			header {
+				background-color: #6f4e37;
+				color: #fff;
+				padding: 40px 20px;
+				text-align: center;
+				position: relative;
 
-      .modal-content {
-        background: #fff;
-        color: #000;
-        border: 1px solid #000;
-        width: 300px;
-        padding: 20px;
-        margin: 15% auto;
-        border-radius: 8px;
-        position: relative;
-      }
+				status {
+					border: 1px solid gray;
+					width: 300px;
+					min-height: 30px;
+					padding: 10px;
+					position: fixed: top: 50px;
+					right: 50px;
+					background: #000;
+					color: #fff;
+				}
+			}
+			header h1 {
+				margin: 0;
+				font-size: 3rem;
+			}
+			qr-code {
+				position: absolute;
+				top: 20px;
+				right: 20px;
+				width: 150px;
+			}
+			section {
+				padding: 60px 20px;
+				max-width: 1100px;
+				margin: auto;
+			}
+			.image-text-block {
+				display: flex;
+				gap: 40px;
+				margin-bottom: 60px;
+				align-items: center;
+				flex-wrap: wrap;
+			}
+			.image-text-block img {
+				width: 30%;
+				border-radius: 10px;
+			}
+			.image-text-block div {
+				flex: 1 1 65%;
+			}
+			footer {
+				background-color: #6f4e37;
+				color: #fff;
+				text-align: center;
+				padding: 30px 20px;
+			}
+			button {
+				border: 2px solid #fff;
+				width: 135px;
+				line-height: 28px;
+				border-radius: 3px;
+				font-size: 14px;
+				letter-spacing: 1.1px;
+			}
+			.qr-container {
+				text-align: center;
+				margin-top: 50px;
+			}
+			.qr-container > img {
+				width: 350px;
+				height: 350px;
+				padding: 100px 0;
+			}
+			.status {
+				margin-bottom: 250px;
+			}
+		</style>
+		<style>
+			.modal {
+				display: none;
+				position: fixed;
+				z-index: 1000;
+				left: 0;
+				top: 0;
+				width: 100%;
+				height: 100%;
+				background-color: rgba(255, 255, 255, 0.08);
+			}
 
-      .close {
-        position: absolute;
-        right: 10px;
-        top: 5px;
-        cursor: pointer;
-        font-size: 20px;
-      }
-      .login-btn{
-        display:block;
-      text-align:right;
-      }
-      .login-btn > button{
-      border: 1px solid #000;
-          margin-right: 4px;
-          margin-top: 15px;
-      }
-  </style>
-</head>
- <body>
-    <header>
-      <h1>Super Fast Coffee House</h1>
-      <p>Feel the Rush. Own the Road.</p>
+			.modal-content {
+				background: #fff;
+				color: #000;
+				border: 1px solid #000;
+				width: 300px;
+				padding: 20px;
+				margin: 15% auto;
+				border-radius: 8px;
+				position: relative;
+			}
 
-      {% if user is defined and user is not null %}
-            <p>Authenticated User: {{ user }}</p>      
-      {% endif %}
+			.close {
+				position: absolute;
+				right: 10px;
+				top: 5px;
+				cursor: pointer;
+				font-size: 20px;
+			}
+			.login-btn {
+				display: block;
+				text-align: right;
+			}
+			.login-btn > button {
+				border: 1px solid #000;
+				margin-right: 4px;
+				margin-top: 15px;
+			}
+		</style>
+	</head>
+	<body>
+		<header>
+			<h1>Super Fast Coffee House</h1>
+			<p>Feel the Rush. Own the Road.</p>
 
-      <a href="/"><button>Home</button></a>
+			{% if user is defined and user is not null %}
+				<p>Authenticated User:
+					{{ user }}</p>
+			{% endif %}
 
-      {% if user is defined and user is null %}
-        <a href="/registration"><button>Register Here</button></a>
+			<a href="/">
+				<button>Home</button>
+			</a>
 
-        <!-- Dropdown és link -->	
-        <button id="open-modal">Login</button>
-        <span id="timeout" style="display:none;color: red;border: 1px solid red;width: 350px;margin: 15px auto 0;"></span>
-        <span id="repeat-login" style="display:none;">Repeat</span>
+			{% if user is not defined or user is null %}
+				<a href="/registration">
+					<button id="registrationBtn">Register Here</button>
+				</a>
+			{% endif %}
+			{% if user is defined and user is not null %}
 
-        <!-- Popup -->
-        <div id="modal" class="modal">
-          <div class="modal-content">
-            <span id="close-modal" class="close">&times;</span>
-            <h2>Login</h2>
-            <select id="user-select"></select>
-                  <a id="user-login" class="login-btn" href="/login"><button>Login</button></a>
-          </div>
-        </div>
-        {% else %}
-        <a href="/logout"><button>Logout</button></a>
-        <button id="one-touch-login">One Touch Login <span id="tick" style="display:none;color: green; font-size: 14px;">✔</span></button>
-      {% endif %}
-    </header>
-    <main>
-    {% block body %}{% endblock %}
-    </main>
-    <footer style="background-color:#030733">
-      <p>&copy; 2025 Aroma Coffee House. All rights reserved.</p>
-    </footer>
-    
-    {% if userPublicId is defined and user is defined %}
-      <script>
-          var storedUsers = JSON.parse(localStorage.getItem("users") || "[]");
-          var newUser = {
-              userPublicId: "{{ userPublicId|e('js') }}",
-              email: "{{ user|e('js') }}"
-          };
-          var oneTouchBtn = document.getElementById("one-touch-login");
+				<a href="/logout">
+					<button>Logout</button>
+				</a>
+				<button id="one-touch-login">One Touch
+					<span id="tick" style="display:none;color: green; font-size: 14px;">✔</span>
+				</button>
+			{% endif %}
 
-          // Hide one touch btn, if user already "one-touch-activated"
+			{% if user is defined and user is null %}
+				<!-- Dropdown és link -->
+				<button id="open-modal">Login</button>
+				<span id="timeout" style="display:none;color: red;border: 1px solid red;width: 350px;margin: 15px auto 0;"></span>
+				<span id="repeat-login" style="display:none;">Repeat</span>
+
+				<!-- Popup -->
+				<div id="modal" class="modal">
+					<div class="modal-content">
+						<span id="close-modal" class="close">&times;</span>
+						<h2>Login</h2>
+						<select id="user-select"></select>
+						<a id="user-login" class="login-btn" href="/login">
+							<button>Login</button>
+						</a>
+					</div>
+				</div>
+
+
+			{% endif %}
+		</header>
+		<main>
+			{% block body %}{% endblock %}
+		</main>
+		<footer style="background-color:#030733">
+			<p>&copy; 2025 Aroma Coffee House. All rights reserved.</p>
+		</footer>
+
+
+		{% if user is defined and user is not null %}
+			<script>
+				var storedUsers = JSON.parse(localStorage.getItem("users") || "[]");
+        var newUser = {
+        userPublicId: "{{ userPublicId|e('js') }}",
+        email: "{{ user|e('js') }}"
+        };
+        var oneTouchBtn = document.getElementById("one-touch-login");
+
+        // Hide one touch btn, if user already "one-touch-activated"
+        var exists = storedUsers.some(u => u.userPublicId === newUser.userPublicId);
+        if (exists) {
+        oneTouchBtn.style.display = "none";
+        }
+
+        // Click and activate the one-touch-login
+        oneTouchBtn.onclick = () => {
           var exists = storedUsers.some(u => u.userPublicId === newUser.userPublicId);
-          if (exists){
-            oneTouchBtn.style.display = "none";
-          }
-
-          // Click and activate the one-touch-login
-          oneTouchBtn.onclick = ()=>{	        
-            var exists = storedUsers.some(u => u.userPublicId === newUser.userPublicId);
-            if (!exists) {
-              storedUsers.push(newUser);
-              localStorage.setItem("users", JSON.stringify(storedUsers));
-              var tick = document.getElementById("tick");
-              tick.style.display = "inline-block";
-              setTimeout( ()=> {
+          if (! exists) {
+           
+            storedUsers.push(newUser);
+            localStorage.setItem("users", JSON.stringify(storedUsers));
+            var tick = document.getElementById("tick");
+            tick.style.display = "inline-block";
+              setTimeout(() => {
                 oneTouchBtn.style.display = "none";
-              }, 33350);   
-            }
+              }, 3350);
           }
-      </script>
-    {% endif %}
+        }
+			</script>
+		{% endif %}
+		<script>
+			// Uploaded users from localStorage to dropdown and set login link
+    function initLoginDropdown() {
+      var currentUrl = window.location.href;
 
-    <script>
-    // Uploaded users from localStorage to dropdown and set login link
-      function initLoginDropdown() {
-        var currentUrl = window.location.href;
+      var storedUsers = JSON.parse(localStorage.getItem("users") || "[]");
+      var select = document.getElementById("user-select");
+      var link = document.getElementById("user-login");
 
-        var storedUsers = JSON.parse(localStorage.getItem("users") || "[]");
-        var select = document.getElementById("user-select");
-        var link = document.getElementById("user-login");
+      if(storedUsers.length === 1) {
+        link.href = `/login?action=login&userPublicId=${storedUsers[0].userPublicId}`;
+        link.click();
+      } 
 
-        if (!select || !link) return;
+      if(storedUsers.length === 0) {
+        link.href = `/login?action=login`;
+        link.click();
+      } 
 
-        select.innerHTML = "";
-        
+      if (! select || ! link) return;
+
+      select.innerHTML = "";
+
+      var option = document.createElement("option");
+      // Default option, if no user is selected
+      option.value = "";
+      option.text = "Select user";
+      select.appendChild(option);
+
+      // Populate dropdown with stored users
+      storedUsers.forEach(user => {
         var option = document.createElement("option");
-        // Default option, if no user is selected
-        option.value = "";
-        option.text = "Select user";
+        option.value = user.userPublicId;
+        option.text = user.email;
         select.appendChild(option);
+      });
 
-        // Populate dropdown with stored users
-        storedUsers.forEach(user => {
-            var option = document.createElement("option");
-            option.value = user.userPublicId;
-            option.text = user.email;
-            select.appendChild(option);
-        });
+      select.addEventListener("change", function () {
+        link.href = `/login?userPublicId=${
+          encodeURIComponent(this.value)
+        }`;
+      });
+    }
 
-        select.addEventListener("change", function() {
-            link.href = `/login?userPublicId=${encodeURIComponent(this.value)}`;
-        });
-      }
-      document.addEventListener("DOMContentLoaded", initLoginDropdown);      
-    </script>
-
-    <script>
-    // Modal functionality
+		</script>
+		<script>
+			// Modal functionality
       const modal = document.getElementById("modal");
       const closeBtn = document.getElementById("close-modal");
       const openBtn = document.getElementById("open-modal");
 
       openBtn.onclick = () => {
         var storedUsers = JSON.parse(localStorage.getItem("users") || "[]");
+        initLoginDropdown();
+        
 
-        // allow to open modal if "one touch user" already exist
-        if(storedUsers.length > 0){
+    // allow to open modal if "one touch user" already exist
+        if (storedUsers.length > 1) {
           modal.style.display = "block";
-        } else { 
-        window.location.href = "/login";
         }
-      }
-
+      } 
       closeBtn.onclick = () => modal.style.display = "none";
 
       // Close modal when clicking outside of it
@@ -253,58 +288,32 @@
           modal.style.display = "none";
         }
       };
-    </script>
+		</script>
 
-    {% if processId is defined and processId %}
-    <script>
-    // Polling for authentication status every 2 seconds
-        let attemptCount = 0;
-        const maxAttempts = 5; // Stop after 5 attempts (10 seconds)
 
-        const intervalId = setInterval(function() {
-            attemptCount++;
+		{% if processId is defined and processId %}
+			<script>
 
-            fetch("/user-login/check?processId={{processId}}")
-                .then(response => {
-                    if (!response.ok) throw new Error("Network error: " + response.status);
-                    return response.json();
-                })
-                .then(data => {                
-                    if (data.message === "Authentication success.") {
-                        clearInterval(intervalId); // stop polling
-                        window.location.href = "/";
-                    }
-                })
-                .catch(error => {
-                    console.error("Fetch failed:", error);
-                });
+				fetch("/user-login/check?processId= {{ processId }}&action= {{ action }}").then(response => {
+        if (!response.ok) 
+        throw new Error("Network error: " + response.status);
 
-            // Stop after 5 attempts              
-            if (attemptCount >= maxAttempts) {
-                clearInterval(intervalId);
-                console.log("Max polling attempts reached.");
-                  var timeoutSpan = document.getElementById("timeout");
-                  timeoutSpan.textContent = "Authentication timed out. Please try again.";
-                  timeoutSpan.style.display = "block";                    
-                  var repeatLogin = document.getElementById("repeat-login");
-                  repeatLogin.style.display = "inline-block";
-            }
-
-        }, 2000);
-
-        var repeatLogin = document.getElementById("repeat-login");
-        repeatLogin.onclick = function() {
-            window.location.href  = "/login";
+        return response.json();
+        }).then(data => {
+        if (data.message === "Authentication success.") {
+        window.location.href = "/";
         }
-    </script> 
-    {% endif %}   
-  </body>
+        if (data.message === "Registration success.") {
+        document.getElementById("registrationBtn").style.background = "green";
+        setTimeout(() => {
+        window.location.href = "/";
+        }, 3000);
+        }
+
+        }).catch(error => {
+        console.error("Fetch failed:", error);
+        });
+			</script>
+		{% endif %}
+	</body>
 </html>
-
-
-  
-      
-
-
-  
-      

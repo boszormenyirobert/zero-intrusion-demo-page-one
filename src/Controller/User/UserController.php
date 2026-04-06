@@ -62,7 +62,6 @@ class UserController extends AbstractController
                 }
             }
         }
-
         
         return $this->render('home.html.twig', [
             'user' => null           
@@ -85,7 +84,7 @@ class UserController extends AbstractController
         ];
 
         $payload = [
-            'publicId' => $this->publicId,
+            'publicId' => $this->publicId, // Corporate ID
             'message'  => $this->corporateKey,
             'domain'   => $this->hub,
         ];
@@ -102,6 +101,7 @@ class UserController extends AbstractController
         return $this->render('qr-action.html.twig', [
             'processId' => $qr['registrationProcessId'],
             'qrCode'     => $responseQR['qrCode'] ?? null,
+            'action' => 'registration'
         ]);
     }
 
@@ -175,6 +175,7 @@ class UserController extends AbstractController
             'X-Client-Auth' => $hmac
         ];       
 
+        // Get the QR code for login from the system hub (API)
         $response = $client->request('POST', $this->hub . $this->userLogin, [
             'headers' => $header,
             'body' => json_encode([
@@ -202,7 +203,8 @@ class UserController extends AbstractController
                 'processId' => $responseQR['domainProcessId'],
                 'qrCodeData' => $responseQR,
                 'qrCode' => $responseQR['qrCode'],
-                'user' => null     
+                'user' => null,
+                'action' => 'login'   
         ]);
     } 
 
@@ -232,8 +234,6 @@ class UserController extends AbstractController
             $this->entityManager->persist($user);
             $this->entityManager->flush();
 
-            $this->logger->critical("Login callback received: " . json_encode((array)$user));
-
             return new JsonResponse(['status' => 'ok'], 200);
 
         } elseif ($ok === 0) {
@@ -256,12 +256,11 @@ class UserController extends AbstractController
         JWTTokenManagerInterface $jwtManager
     )
     {
-        $processId = $request->query->get('processId');
-        $user = $userRepository->findOneBy([
-            'process' => $processId
-        ]);
+        $processId = trim($request->query->get('processId'));
+        $action = trim($request->query->get('action'));
+        $user = $this->pollState($processId, $userRepository, $action);
        
-        if($user && $user->isAllowed()){            
+        if($action === 'login' && $user && is_object($user) && $user->isAllowed()){            
             $token = $jwtManager->create($user);
             $response = new JsonResponse([
                 'message' => 'Authentication is success',
@@ -285,8 +284,17 @@ class UserController extends AbstractController
             ]);
 
             $response->headers->setCookie($cookie);
+            // After successful login, reset the user's allowed status and process to prevent reuse
+            $user->setAllowed(false);
+            $user->setProcess(null);
+            $this->entityManager->persist($user);
+            $this->entityManager->flush();
 
             return $response;
+        }
+
+        if($action === 'registration' && $user && is_object($user)){
+            return $this->json(['message' => 'Registration success.']);
         }
 
         return $this->json(['message' => 'Unsuccess authentication.']);
@@ -355,5 +363,38 @@ class UserController extends AbstractController
         $this->logger->critical('SSL openssl_verify is valid : ' . $result);
 
         return $result;
+    }
+
+    public function pollState(string $processId, UserRepository $userRepository, string $action): array|\App\Entity\User{
+            $startTime = time();
+            $maxWait = 10; // seconds
+            $response = [];
+            $toAutoNotification = [];
+
+            do {
+                $user = $userRepository->findOneBy([
+                    'process' => $processId
+                ]);
+
+                // If the record is found (isAllowed true), proceed
+                if($action === 'login' && $user && $user->isAllowed()){ 
+                    $response = $user;
+                    break;
+                }
+                if($action === 'registration' && $user){ 
+                    $response = $user;
+                    break;
+                }
+
+                // Break if max wait time exceeded
+                if ((time() - $startTime) >= $maxWait) {
+                    break;
+                }
+
+                // Wait 0.5 seconds before the next attempt
+                usleep(500000);
+            } while (true);
+
+            return $response;
     }
 }
