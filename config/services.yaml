@@ -8,6 +8,7 @@ parameters:
     CORPORATE_ID_SECRET: '%env(CORPORATE_ID_SECRET)%'
     CORPORATE_ID_KEY: '%env(CORPORATE_ID_KEY)%'
     CORPORATE_ID: '%env(CORPORATE_ID)%'
+    HUB_PATH: '%env(HUB_PATH)%'
 
 
 services:

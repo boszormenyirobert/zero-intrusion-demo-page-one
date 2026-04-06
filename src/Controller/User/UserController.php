@@ -21,7 +21,7 @@ class UserController extends AbstractController
     private string $secret;
     private string $corporateKey;
     private string $publicId;
-    private string $hub = 'http://hub.local:8082';
+    private string $hub;
     private string $userRegistration = '/api/user-registration';
     private string $userLogin = '/api/user-login';
 
@@ -34,6 +34,7 @@ class UserController extends AbstractController
         $this->secret = $this->params->get('CORPORATE_ID_SECRET');
         $this->corporateKey = $this->params->get('CORPORATE_ID_KEY');
         $this->publicId = $this->params->get('CORPORATE_ID');
+        $this->hub = $this->params->get('HUB_PATH');
     }
 
     /**
