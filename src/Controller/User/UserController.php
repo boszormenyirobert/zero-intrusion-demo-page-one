@@ -151,7 +151,7 @@ class UserController extends AbstractController
             }
 
             // Length check
-            if (strlen($userPublicId) !== 48) {
+            if (strlen($userPublicId) < 42 || strlen($userPublicId) > 50) {
                 throw new \InvalidArgumentException('Invalid length.');
             }
 
@@ -163,7 +163,7 @@ class UserController extends AbstractController
             // Strict decode
             $decoded = base64_decode($userPublicId, true);
 
-            if ($decoded === false || strlen($decoded) !== 35) {
+            if ($decoded === false || strlen($decoded) < 32 || strlen($decoded) > 48) {
                 throw new \InvalidArgumentException('Invalid token.');
             }
         }
